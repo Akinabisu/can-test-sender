@@ -1,3 +1,3 @@
 class I2CScanner:
-    def scan():
+    def scan(self):
         pass

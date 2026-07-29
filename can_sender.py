@@ -17,6 +17,12 @@ class CANSender:
         finally:
             writer.close()
 
+    async def sendPeriodically(self, rx_id: int, tx_id:int, data: bytes, period: int):
+        while (True):
+            await self.send(rx_id, tx_id, data)
+            await asyncio.sleep(period)
+
+
     def close(self):
         self.network.close()
 
