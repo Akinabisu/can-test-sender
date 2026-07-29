@@ -22,7 +22,6 @@ class CANSender:
             await self.send(rx_id, tx_id, data)
             await asyncio.sleep(period)
 
-
     def close(self):
         self.network.close()
 
