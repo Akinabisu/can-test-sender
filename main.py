@@ -1,5 +1,5 @@
 from file_reader import FileReader
-from encoder import encoder
+from encoder import Encoder
 from buffer_editor import BufferEditor
 from can_sender import CANSender
 from i2c_scanner import I2CScanner
