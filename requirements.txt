@@ -1,3 +1,4 @@
 can
-gpiozero
-aioisotp
+gpiozero==2.0.1.post3
+aioisotp=0.1.1
+setuptools==81.0.0

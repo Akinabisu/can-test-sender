@@ -40,6 +40,7 @@ class LEDControllerMock:
             return 1
         if (self.led_mode==LEDMode.FAST):
             return 4
+        return 1
 
     async def blink(self):
         while (True):

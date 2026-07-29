@@ -9,10 +9,10 @@ import asyncio
 
 READ_FILE_PATH = "input.txt"
 
-async def emulateI2CScan(led_controller: LEDController):
-    led_controller.setState(LEDMode.FAST)
+async def emulateI2CScan(led_controller: LEDControllerMock):
+    led_controller.setMode(LEDMode.FAST)
     await asyncio.sleep(1)
-    led_controller.setState(LEDMode.NORMAL)
+    led_controller.setMode(LEDMode.NORMAL)
 
 async def main():
     content = FileReader.read(READ_FILE_PATH)
@@ -21,7 +21,11 @@ async def main():
 
     led_controller = LEDControllerMock()
 
-    blink_task = asyncio.create_task(led_controller.blink())
+    blink_task = asyncio.create_task(led_controller.blink())    
+
+    async with CANSender(interface='socketcan', channel='vcan0') as sender:
+        await sender.send(0x7E8, 0x7E0, encoded_data)
+        print("Data sent successfully!")
 
     while True:
         await asyncio.sleep(4)
