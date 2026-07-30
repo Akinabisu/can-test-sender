@@ -23,3 +23,8 @@ class LEDControllerMock:
 
     def setMode(self, new_mode: LEDMode):
         self.led_mode = new_mode
+        
+    async def setModeForPeriod(self, new_mode: LEDMode, period: int = 1, end_mode: LEDMode = LEDMode.NORMAL):
+        self.setMode(new_mode)
+        await asyncio.sleep(period)
+        self.setMode(end_mode)

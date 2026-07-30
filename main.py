@@ -10,8 +10,9 @@ from encoder import Encoder
 from buffer_editor import BufferEditor
 from can_sender import CANSender
 from i2c_scanner import I2CScanner
-
 from led_controller import LEDController, LEDMode
+# from mocks.led_controller_mock import LEDControllerMock
+# from mocks.i2c_scanner_mock import I2CScannerMock
 
 import asyncio
 

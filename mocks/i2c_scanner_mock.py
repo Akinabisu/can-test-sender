@@ -1,4 +1,4 @@
-class I2CScanner:
+class I2CScannerMock:
     @staticmethod
     def scan(detected_addresses: set[int] = {0x3C, 0x68}) -> str:
         lines = ["     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"]
