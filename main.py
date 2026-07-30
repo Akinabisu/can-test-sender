@@ -1,5 +1,5 @@
 import os
-import sys
+import asyncio
 
 if not os.path.exists("/proc/device-tree/model"):
     os.environ["GPIOZERO_PIN_FACTORY"] = "mock"
@@ -14,7 +14,6 @@ from led_controller import LEDController, LEDMode
 # from mocks.led_controller_mock import LEDControllerMock
 # from mocks.i2c_scanner_mock import I2CScannerMock
 
-import asyncio
 
 READ_FILE_PATH = "input.txt"
 
@@ -27,9 +26,9 @@ TX_I2C = 0x703
 SCAN_PERIOD = 60
 LED_GPIO = 17
 
-async def periodicI2CScanSendLED(sender: CANSender, led_controller: LEDController, period: int):
+async def periodic_i2c_scan_send_led(sender: CANSender, led_controller: LEDController, period: int):
     while (True):
-        asyncio.create_task(led_controller.setModeForPeriod(LEDMode.FAST))
+        asyncio.create_task(led_controller.set_mode_for_period(LEDMode.FAST))
         scan_result = await asyncio.to_thread(I2CScanner.scan)
         encoded_scan_result = Encoder.encode(scan_result)
         await sender.send(RX_I2C, TX_I2C, encoded_scan_result)
@@ -37,7 +36,7 @@ async def periodicI2CScanSendLED(sender: CANSender, led_controller: LEDControlle
 
 async def main():
     content = FileReader.read(READ_FILE_PATH)
-    edited_buffer = BufferEditor.editBuffer(content)
+    edited_buffer = BufferEditor.edit_buffer(content)
     encoded_data = Encoder.encode(edited_buffer)
 
     led_controller = LEDController(LED_GPIO)
@@ -45,7 +44,7 @@ async def main():
 
     async with CANSender() as sender:
         task_txt = asyncio.create_task(sender.send(RX_TXT, TX_TXT, encoded_data))
-        task_i2c = asyncio.create_task(periodicI2CScanSendLED(sender, led_controller, SCAN_PERIOD))
+        task_i2c = asyncio.create_task(periodic_i2c_scan_send_led(sender, led_controller, SCAN_PERIOD))
 
         await asyncio.gather(task_led, task_txt, task_i2c)
 
