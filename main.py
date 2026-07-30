@@ -24,19 +24,13 @@ RX_I2C = 0x702
 TX_I2C = 0x703
 
 SCAN_PERIOD = 60
-FAST_PERIOD = 1
 
 LED_GPIO = 17
 
-async def setFastForPeriod(led_controller: LEDController, period: int):
-    led_controller.setMode(LEDMode.FAST)
-    await asyncio.sleep(period)
-    led_controller.setMode(LEDMode.NORMAL)
-
 async def periodicI2CScanSendLED(sender: CANSender, led_controller: LEDController, period: int):
     while (True):
-        asyncio.create_task(setFastForPeriod(led_controller, FAST_PERIOD))
-        scan_result = await asyncio.to_thread(I2CScanner.scan_mock)
+        asyncio.create_task(led_controller.setModeForPeriod(LEDMode.FAST))
+        scan_result = await asyncio.to_thread(I2CScanner.scan)
         print(scan_result)
         encoded_scan_result = Encoder.encode(scan_result)
         await sender.send(RX_I2C, TX_I2C, encoded_scan_result)
