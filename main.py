@@ -14,8 +14,7 @@ from led_controller import LEDController, LEDMode
 # from mocks.led_controller_mock import LEDControllerMock
 # from mocks.i2c_scanner_mock import I2CScannerMock
 
-
-READ_FILE_PATH = "input.txt"
+READ_FILE_PATH = "/usr/bin/sender/input.txt"
 
 RX_TXT = 0x700
 TX_TXT = 0x701

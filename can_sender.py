@@ -26,11 +26,11 @@ class CANSender:
         try:
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, sock.send, data)
+            print(f"SENT: {data}")
 
         except Exception as e:
             print(f"Failed to send CAN data: {e}")
 
-        print(f"SENT: {data}")
 
     async def send_periodically(
         self,
@@ -51,6 +51,7 @@ class CANSender:
                 pass
 
         self.connections.clear()
+        print("Closed CAN connection")
 
     async def __aenter__(self):
         return self
