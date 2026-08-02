@@ -28,4 +28,7 @@ class I2CScanner:
         except PermissionError:
             return f"Error: Permission denied accessing /dev/i2c-{bus_number}. Try running with sudo."
 
-        return "\n".join(lines)
+        lines = "\n".join(lines)
+        
+        print(f"Scanned I2C, Result: \n{lines}")
+        return lines
