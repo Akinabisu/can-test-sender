@@ -1,30 +1,52 @@
-from led_controller import LEDMode
 import asyncio
+import logging
+from enum import Enum
+from led_mode import LEDMode
+
+logger = logging.getLogger(__name__)
+
 
 class LEDControllerMock:
-
-    def __init__(self):
+    def __init__(self, gpio_pin: int):
+        self.gpio_pin = gpio_pin
         self.led_mode = LEDMode.NORMAL
-
-    def mode_to_hz(self) -> int:
-        if (self.led_mode==LEDMode.NORMAL):
-            return 1
-        if (self.led_mode==LEDMode.FAST):
-            return 4
-        return 1
+        self.is_on = False
+        logger.info(f"[MOCK] Initialized mock LED on GPIO pin {gpio_pin}")
 
     async def blink(self):
-        while (True):
-            half_period = 1/self.mode_to_hz()/2
-            print(f"ON for {half_period}s\n");
-            await asyncio.sleep(half_period)
-            print(f"OFF for {half_period}s\n");
-            await asyncio.sleep(half_period)
+        logger.info(f"[MOCK] Starting LED blinking loop on GPIO {self.gpio_pin}")
+        try:
+            while True:
+                half_period = 1 / self.led_mode.frequency / 2
+
+                self.is_on = True
+                logger.info(f"[MOCK] GPIO {self.gpio_pin} -> ON ({self.led_mode.name} mode)")
+                await asyncio.sleep(half_period)
+
+                self.is_on = False
+                logger.info(f"[MOCK] GPIO {self.gpio_pin} -> OFF ({self.led_mode.name} mode)")
+                await asyncio.sleep(half_period)
+
+        except asyncio.CancelledError:
+            logger.info(f"[MOCK] Blinking loop on GPIO {self.gpio_pin} canceled.")
+            self.stop()
+            raise
+        except Exception as e:
+            logger.error(f"[MOCK] Unexpected error in blinking loop: {e}")
+            self.stop()
+            raise
 
     def set_mode(self, new_mode: LEDMode):
-        self.led_mode = new_mode
-        
-    async def set_mode_for_period(self, new_mode: LEDMode, period: int = 1, end_mode: LEDMode = LEDMode.NORMAL):
+        if self.led_mode != new_mode:
+            logger.info(f"[MOCK] Changed mode on GPIO {self.gpio_pin}: {self.led_mode.name} -> {new_mode.name}")
+            self.led_mode = new_mode
+
+    async def set_mode_for_period(self, new_mode: LEDMode, period: float = 1.0, end_mode: LEDMode = LEDMode.NORMAL
+    ):
         self.set_mode(new_mode)
         await asyncio.sleep(period)
         self.set_mode(end_mode)
+
+    def stop(self):
+        self.is_on = False
+        logger.info(f"[MOCK] GPIO {self.gpio_pin} mock LED stopped.")

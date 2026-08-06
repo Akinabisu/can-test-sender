@@ -1,20 +1,22 @@
 import os
 import asyncio
+import logging
+from pathlib import Path
 
-if not os.path.exists("/proc/device-tree/model"):
-    os.environ["GPIOZERO_PIN_FACTORY"] = "mock"
-    from gpiozero.pins.mock import MockFactory
+USE_MOCKS = not (os.path.exists("/proc/device-tree/model"))
+
+if USE_MOCKS:
+    from mocks.i2c_scanner_mock import I2CScannerMock as I2CScanner
+    from mocks.led_controller_mock import LEDControllerMock as LEDController, LEDMode
+else:
+    from i2c_scanner import I2CScanner
+    from led_controller import LEDController, LEDMode
 
 from file_reader import FileReader
-from encoder import Encoder
 from buffer_editor import BufferEditor
 from can_sender import CANSender
-from i2c_scanner import I2CScanner
-from led_controller import LEDController, LEDMode
-# from mocks.led_controller_mock import LEDControllerMock
-# from mocks.i2c_scanner_mock import I2CScannerMock
 
-READ_FILE_PATH = "/usr/bin/sender/input.txt"
+logger = logging.getLogger(__name__)
 
 RX_TXT = 0x700
 TX_TXT = 0x701
@@ -25,27 +27,64 @@ TX_I2C = 0x703
 SCAN_PERIOD = 60
 LED_GPIO = 17
 
-async def periodic_i2c_scan_send_led(sender: CANSender, led_controller: LEDController, period: int):
-    while (True):
-        asyncio.create_task(led_controller.set_mode_for_period(LEDMode.FAST))
-        scan_result = await asyncio.to_thread(I2CScanner.scan)
-        encoded_scan_result = Encoder.encode(scan_result)
-        await sender.send(RX_I2C, TX_I2C, encoded_scan_result)
-        await asyncio.sleep(period)
+INPUT_PATH = Path(__file__).resolve().parent / "input.txt"
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] [%(name)s]: %(message)s"
+    )
+
+async def periodic_i2c_scan_send_led(sender: CANSender, led_controller: LEDController, period: float):
+    logger.info(f"Starting periodic I2C scan loop (interval: {period}s)")
+
+    try:
+        while True:
+            start_time = asyncio.get_event_loop().time()
+            
+            await led_controller.set_mode_for_period(LEDMode.FAST, period=1.0)
+            table_output = await asyncio.to_thread(I2CScanner.scan_to_str)
+            await sender.send(table_output.encode("ascii", errors="replace"))
+            
+            elapsed = asyncio.get_event_loop().time() - start_time
+            sleep_duration = max(0.0, period - elapsed)
+            await asyncio.sleep(sleep_duration)
+
+    except asyncio.CancelledError:
+        logger.info("Periodic I2C scan task canceled")
+        raise
 
 async def main():
-    content = FileReader.read(READ_FILE_PATH)
+    setup_logging()
+    
+    content = await asyncio.to_thread(FileReader.read, INPUT_PATH)
     edited_buffer = BufferEditor.edit_buffer(content)
-    encoded_data = Encoder.encode(edited_buffer)
 
     led_controller = LEDController(LED_GPIO)
     task_led = asyncio.create_task(led_controller.blink())
 
-    async with CANSender() as sender:
-        task_txt = asyncio.create_task(sender.send(RX_TXT, TX_TXT, encoded_data))
-        task_i2c = asyncio.create_task(periodic_i2c_scan_send_led(sender, led_controller, SCAN_PERIOD))
+    async with CANSender(RX_TXT, TX_TXT) as sender_txt:
+        await sender_txt.send(edited_buffer.encode("ascii", errors="replace"))
 
-        await asyncio.gather(task_led, task_txt, task_i2c)
+    async with CANSender(RX_I2C, TX_I2C) as sender_i2c:
+        task_i2c = asyncio.create_task(
+            periodic_i2c_scan_send_led(sender_i2c, led_controller, SCAN_PERIOD)
+        )
+
+        logger.info("All services running. Press Ctrl+C to stop.")
+        try:
+            await asyncio.gather(task_led, task_i2c)
+        finally:
+            logger.info("Cleaning up tasks and resources...")
+            task_led.cancel()
+            task_i2c.cancel()
+            await asyncio.gather(task_led, task_i2c, return_exceptions=True)
+            
+            if hasattr(led_controller, "stop"):
+                led_controller.stop()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Application stopped manually.")

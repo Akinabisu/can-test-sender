@@ -1,60 +1,85 @@
 import asyncio
+import logging
+import os
 import isotp
 
+logger = logging.getLogger(__name__)
 
 class CANSender:
-    def __init__(self, channel: str = "vcan0"):
-        self.channel = channel
-        self.connections = {}
+    def __init__(self, rx_id: int, tx_id: int, channel: str | None = None):
+        if not isinstance(rx_id, int) or rx_id < 0:
+            logger.error(f"Invalid rx_id '{rx_id}'. Must be a non-negative integer.")
+            raise ValueError("rx_id must be a non-negative integer")
+        if not isinstance(tx_id, int) or tx_id < 0:
+            logger.error(f"Invalid tx_id '{tx_id}'. Must be a non-negative integer.")
+            raise ValueError("tx_id must be a non-negative integer")
 
-    async def send(self, rx_id: int, tx_id: int, data: bytes):
-        key = (rx_id, tx_id)
+        self.channel = channel or os.getenv("CAN_CHANNEL", "vcan0")
+        self.rx_id = rx_id
+        self.tx_id = tx_id
+        self.sock: isotp.socket | None = None
 
-        if key not in self.connections:
-            sock = isotp.socket()
+    async def _connect(self):
+        if self.sock is not None:
+            return
 
-            addr = isotp.Address(
-                rxid=rx_id,
-                txid=tx_id
+        logger.info(
+            f"Binding ISO-TP socket on '{self.channel}' "
+            f"(Tx: 0x{self.tx_id:03X}, Rx: 0x{self.rx_id:03X})..."
+        )
+        try:
+            addr = isotp.Address(rxid=self.rx_id, txid=self.tx_id)
+            self.sock = await asyncio.to_thread(isotp.socket)
+            await asyncio.to_thread(self.sock.bind, self.channel, address=addr)
+        except OSError as e:
+            logger.error(
+                f"Failed to bind ISO-TP socket on '{self.channel}' "
+                f"(Tx: 0x{self.tx_id:03X}, Rx: 0x{self.rx_id:03X}): {e}"
             )
+            await self.close()
+            raise
 
-            sock.bind(self.channel, address=addr)
-            self.connections[key] = sock
-
-        sock = self.connections[key]
+    async def send(self, data: bytes):
+        if self.sock is None:
+            await self._connect()
 
         try:
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(None, sock.send, data)
-            print(f"SENT: {data}")
+            await asyncio.to_thread(self.sock.send, data)
+            logger.info(
+                f"Sent {len(data)} bytes on {self.channel} "
+                f"Tx: 0x{self.tx_id:03X} -> Rx: 0x{self.rx_id:03X}"
+            )
+        except (OSError, isotp.IsoTpError) as e:
+            logger.error(f"Failed to send CAN data: {e}")
+            raise
 
-        except Exception as e:
-            print(f"Failed to send CAN data: {e}")
+    async def send_periodically(self, data: bytes, period: float):
+        logger.info(
+            f"Starting periodic transmission on '{self.channel}' "
+            f"(Tx: 0x{self.tx_id:03X}, Rx: 0x{self.rx_id:03X}, period: {period}s)"
+        )
+        try:
+            while True:
+                await self.send(data)
+                await asyncio.sleep(period)
+        except asyncio.CancelledError:
+            logger.info(
+                f"Periodic CAN transmission task (Tx: 0x{self.tx_id:03X}, Rx: 0x{self.rx_id:03X}) canceled."
+            )
+            raise
 
-
-    async def send_periodically(
-        self,
-        rx_id: int,
-        tx_id: int,
-        data: bytes,
-        period: float
-    ):
-        while True:
-            await self.send(rx_id, tx_id, data)
-            await asyncio.sleep(period)
-
-    def close(self):
-        for sock in self.connections.values():
+    async def close(self):
+        if self.sock is not None:
+            logger.info(f"Closing active CAN connection on '{self.channel}'...")
             try:
-                sock.close()
-            except Exception:
-                pass
-
-        self.connections.clear()
-        print("Closed CAN connection")
+                sock, self.sock = self.sock, None
+                await asyncio.to_thread(sock.close)
+            except Exception as e:
+                logger.debug(f"Error closing socket: {e}")
 
     async def __aenter__(self):
+        await self._connect()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        await self.close()
