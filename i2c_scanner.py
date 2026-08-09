@@ -23,18 +23,18 @@ class I2CScanner:
             return active_addresses
 
         except FileNotFoundError:
-            logging.error(f"I2C bus /dev/i2c-{bus_number} not found.")
+            logging.exception(f"I2C bus /dev/i2c-{bus_number} not found.")
             raise
         except PermissionError:
-            logging.error(f"Permission denied accessing /dev/i2c-{bus_number}.")
+            logging.exception(f"Permission denied accessing /dev/i2c-{bus_number}.")
             raise
-        except Exception as e:
-            logging.error(f"Error scanning I2C bus {bus_number}: {e}")
+        except Exception:
+            logging.exception(f"Error scanning I2C bus {bus_number}")
             raise
 
     @staticmethod
-    def scan_to_str() -> str:
-        detected_addresses = I2CScanner.scan()
+    def scan_to_str(bus_number: int = 1) -> str:
+        detected_addresses = I2CScanner.scan(bus_number)
         lines = ["     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"]
 
         for row in range(0x00, 0x80, 0x10):

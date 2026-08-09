@@ -1,17 +1,11 @@
 import asyncio
 import logging
-from enum import Enum
 from gpiozero import LED
+from led_mode import LEDMode
 
 logger = logging.getLogger(__name__)
 
-class LEDMode(Enum):
-    NORMAL = 1
-    FAST = 4
 
-    @property
-    def frequency_hz(self) -> float:
-        return float(self.value)
 
 class LEDController:
     def __init__(self, gpio_pin: int):
@@ -32,11 +26,11 @@ class LEDController:
                 await asyncio.sleep(half_period)
 
         except asyncio.CancelledError:
-            logger.info(f"LED blinking loop on GPIO {self.gpio_pin} canceled. Cleaning up...")
+            logger.info(f"LED blinking loop on GPIO {self.gpio_pin} canceled")
             self.stop()
             raise
         except Exception as e:
-            logger.error(f"Unexpected error in LED blinking loop: {e}")
+            logger.exception(f"Unexpected error in LED blinking loop on GPIO {self.gpio_pin}")
             self.stop()
             raise
 
@@ -52,6 +46,9 @@ class LEDController:
         self.set_mode(end_mode)
 
     def stop(self):
-        self.led.off()
-        self.led.close()
-        logger.info(f"LED on GPIO {self.gpio_pin} stopped and hardware closed.")
+        try:
+            self.led.off()
+            self.led.close()
+            logger.info(f"LED on GPIO {self.gpio_pin} stopped and hardware closed.")
+        except Exception:
+            logger.exception(f"Error while stopping LED on GPIO {self.gpio_pin}")

@@ -1,22 +1,14 @@
 import asyncio
 import logging
-from enum import Enum
+from led_mode import LEDMode
 
 logger = logging.getLogger(__name__)
-
-class LEDMode(Enum):
-    NORMAL = 1
-    FAST = 4
-
-    @property
-    def frequency_hz(self) -> float:
-        return float(self.value)
 
 class LEDControllerMock:
     def __init__(self, gpio_pin: int):
         self.gpio_pin = gpio_pin
         self.led_mode = LEDMode.NORMAL
-        self.is_on = False
+        self.led = False
         logger.info(f"[MOCK] Initialized mock LED on GPIO pin {gpio_pin}")
 
     async def blink(self):
@@ -25,12 +17,12 @@ class LEDControllerMock:
             while True:
                 half_period = 1 / self.led_mode.frequency_hz / 2
 
-                self.is_on = True
-                logger.info(f"[MOCK] GPIO {self.gpio_pin} -> ON ({self.led_mode.name} mode)")
+                self.led = True
+                logger.info(f"[MOCK] LED on GPIO {self.gpio_pin} -> ON ({self.led_mode.name} mode)")
                 await asyncio.sleep(half_period)
 
-                self.is_on = False
-                logger.info(f"[MOCK] GPIO {self.gpio_pin} -> OFF ({self.led_mode.name} mode)")
+                self.led = False
+                logger.info(f"[MOCK] LED on GPIO {self.gpio_pin} -> OFF ({self.led_mode.name} mode)")
                 await asyncio.sleep(half_period)
 
         except asyncio.CancelledError:
@@ -38,7 +30,7 @@ class LEDControllerMock:
             self.stop()
             raise
         except Exception as e:
-            logger.error(f"[MOCK] Unexpected error in blinking loop: {e}")
+            logger.exception(f"[MOCK] Unexpected error in blinking loop: {e}")
             self.stop()
             raise
 
@@ -54,5 +46,5 @@ class LEDControllerMock:
         self.set_mode(end_mode)
 
     def stop(self):
-        self.is_on = False
+        self.led = False
         logger.info(f"[MOCK] GPIO {self.gpio_pin} mock LED stopped.")

@@ -4,13 +4,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 class I2CScannerMock:
+    @staticmethod
+    def scan(bus_number: int = 1, active_addresses: list[int] = [0x3C, 0x68]) -> list[int]:
+        logging.info(f"[MOCK]Scanning I2C bus /dev/i2c-{bus_number}...")
+        return active_addresses
 
     @staticmethod
-    def scan_to_str() -> str:
-        detected_addresses = set({0x3C, 0x68})
+    def scan_to_str(bus_number: int = 1) -> str:
+        detected_addresses = I2CScannerMock.scan(bus_number)
 
-        logger.info("[MOCK] Performing virtual I2C scan...")
-        
         lines = ["     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"]
 
         for row in range(0x00, 0x80, 0x10):
