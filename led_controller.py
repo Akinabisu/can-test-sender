@@ -5,11 +5,6 @@ from led_mode import LEDMode
 
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 54dbb425027a27822d3d5035a81f89b47cb9d7ab
 class LEDController:
     def __init__(self, gpio_pin: int):
         self.gpio_pin = gpio_pin
