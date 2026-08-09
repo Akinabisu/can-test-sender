@@ -1,9 +1,17 @@
 import asyncio
 import logging
+<<<<<<< HEAD
+=======
+from enum import Enum
+>>>>>>> 54dbb425027a27822d3d5035a81f89b47cb9d7ab
 from led_mode import LEDMode
 
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 54dbb425027a27822d3d5035a81f89b47cb9d7ab
 class LEDControllerMock:
     def __init__(self, gpio_pin: int):
         self.gpio_pin = gpio_pin
@@ -15,7 +23,7 @@ class LEDControllerMock:
         logger.info(f"[MOCK] Starting LED blinking loop on GPIO {self.gpio_pin}")
         try:
             while True:
-                half_period = 1 / self.led_mode.frequency_hz / 2
+                half_period = 1 / self.led_mode.frequency / 2
 
                 self.led = True
                 logger.info(f"[MOCK] LED on GPIO {self.gpio_pin} -> ON ({self.led_mode.name} mode)")
@@ -46,5 +54,10 @@ class LEDControllerMock:
         self.set_mode(end_mode)
 
     def stop(self):
+<<<<<<< HEAD
         self.led = False
         logger.info(f"[MOCK] GPIO {self.gpio_pin} mock LED stopped.")
+=======
+        self.is_on = False
+        logger.info(f"[MOCK] GPIO {self.gpio_pin} mock LED stopped.")
+>>>>>>> 54dbb425027a27822d3d5035a81f89b47cb9d7ab

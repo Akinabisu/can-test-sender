@@ -5,8 +5,11 @@ from led_mode import LEDMode
 
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 54dbb425027a27822d3d5035a81f89b47cb9d7ab
 class LEDController:
     def __init__(self, gpio_pin: int):
         self.gpio_pin = gpio_pin
@@ -18,7 +21,7 @@ class LEDController:
         logger.info(f"Starting LED blinking loop on GPIO {self.gpio_pin}")
         try:
             while True:
-                half_period = 1 / self.led_mode.frequency_hz / 2
+                half_period = 1 / self.led_mode.frequency / 2
                 
                 self.led.on()
                 await asyncio.sleep(half_period)

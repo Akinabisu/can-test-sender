@@ -51,4 +51,7 @@ class I2CScanner:
 
             lines.append(line)
 
-        return "\n".join(lines)
+        lines = "\n".join(lines)
+        
+        print(f"Scanned I2C, Result: \n{lines}")
+        return lines

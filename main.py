@@ -36,6 +36,8 @@ async def periodic_i2c_scan_send_led(controller: CANController, led_controller: 
 
     try:
         while True:
+            start_time = asyncio.get_event_loop().time()
+            
             await led_controller.set_mode_for_period(LEDMode.FAST, period=1.0)
             table_output = await asyncio.to_thread(I2CScanner.scan_to_str)
             await controller.send(SENDER_RX_I2C, SENDER_TX_I2C, table_output.encode("ascii", errors="replace"))
@@ -48,7 +50,7 @@ async def periodic_i2c_scan_send_led(controller: CANController, led_controller: 
 async def main():
     LoggerSetup.setup_logging()
     
-    content = FileReader.read(INPUT_PATH)
+    content = await asyncio.to_thread(FileReader.read, INPUT_PATH)
     edited_buffer = BufferEditor.edit_buffer(content)
 
     led_controller = LEDController(LED_GPIO)
@@ -64,7 +66,6 @@ async def main():
         )
 
         logger.info("All services running. Press Ctrl+C to stop.")
-
         try:
             await asyncio.gather(task_led, task_i2c)
 
@@ -73,8 +74,6 @@ async def main():
             task_led.cancel()
             task_i2c.cancel()
             await asyncio.gather(task_led, task_i2c, return_exceptions=True)
-            led_controller.stop()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

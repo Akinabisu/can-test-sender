@@ -16,7 +16,6 @@ async def handle_message(controller: CANController, rx_id: int, tx_id: int) -> N
     while True:
         await controller.receive(rx_id, tx_id)
 
-
 async def main():
     LoggerSetup.setup_logging()
 
