@@ -35,7 +35,7 @@ class CANController:
             await loop.run_in_executor(None, sock.send, data)
 
             logger.info(
-                f"Sent message on {self.channel} Tx: 0x{tx_id:03X} -> Rx: 0x{rx_id:03X} | {len(data)} bytes: {data}"
+                f"Sent message on {self.channel} Tx: 0x{tx_id:03X} -> Rx: 0x{rx_id:03X} | {len(data)} bytes: {data.hex()}"
             )
         except Exception:
             logger.exception(f"Error sending CAN data on Tx: 0x{tx_id:03X} -> Rx: 0x{rx_id:03X}")
@@ -50,7 +50,7 @@ class CANController:
             loop = asyncio.get_running_loop()
             data = await loop.run_in_executor(None, sock.recv)
             logger.info(
-                f"Received message on {self.channel} Rx: 0x{rx_id:03X} <- Tx: 0x{tx_id:03X} | {len(data)} bytes: {data}"
+                f"Received message on {self.channel} Rx: 0x{rx_id:03X} <- Tx: 0x{tx_id:03X} | {len(data)} bytes: {data.hex()}"
             )
             return data
         except Exception:

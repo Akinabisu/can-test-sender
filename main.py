@@ -36,8 +36,6 @@ async def periodic_i2c_scan_send_led(controller: CANController, led_controller: 
 
     try:
         while True:
-            start_time = asyncio.get_event_loop().time()
-            
             await led_controller.set_mode_for_period(LEDMode.FAST, period=1.0)
             table_output = await asyncio.to_thread(I2CScanner.scan_to_str)
             await controller.send(SENDER_RX_I2C, SENDER_TX_I2C, table_output.encode("ascii", errors="replace"))
