@@ -17,6 +17,21 @@ The program runs on Linux, with kernel support for CAN-ISOTP and I2C
 can-isotp python-can smbus2 gpiozero
 ```
 
+## How to run
+**1. Enable Virtual CAN (vcan0)**
+
+```bash
+sudo modprobe vcan
+sudo ip link add dev vcan0 type vcan
+sudo ip link set up vcan0
+```
+
+**2. Run the application**
+
+```bash
+python3 main.py
+```
+
 ## Data flow:
 
 ```text
