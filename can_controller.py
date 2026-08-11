@@ -28,15 +28,15 @@ class CANController:
 
         if key not in self.connections:
             sock = isotp.socket()
-            address_flags = (
-                isotp.AddressFlags.CAN_ID_EXTENDED
-                if is_extended
-                else isotp.AddressFlags.NONE
-            )
 
-            address = isotp.Address(
-                rxid=rx_id, txid=tx_id, flags=address_flags
-            )
+            if is_extended:
+                address = isotp.Address(
+                    rxid=rx_id, txid=tx_id, flags=isotp.AddressFlags.CAN_ID_EXTENDED
+                )
+            else:
+                address = isotp.Address(
+                    rxid=rx_id, txid=tx_id
+                )
 
             sock.bind(self.channel, address=address)
             self.connections[key] = sock
