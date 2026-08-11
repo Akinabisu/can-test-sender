@@ -10,9 +10,6 @@ class FileReader:
         
         try:
             content = target_path.read_text(encoding=encoding)
-            logger.info(f"Successfully read: '{target_path}' ({len(content)} characters)")
-            return content
-
         except FileNotFoundError:
             logger.exception(f"File not found: '{target_path}'")
             raise
@@ -22,3 +19,6 @@ class FileReader:
         except Exception:
             logger.exception(f"Failed to read :'{target_path}'")
             raise
+        
+        logger.info(f"Successfully read: '{target_path}' ({len(content)} characters)")
+        return content

@@ -14,6 +14,7 @@ class LEDController:
 
     async def blink(self):
         logger.info(f"Starting LED blinking loop on GPIO {self.gpio_pin}")
+        
         try:
             while True:
                 half_period = 1 / self.led_mode.frequency / 2

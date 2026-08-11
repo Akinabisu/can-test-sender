@@ -18,5 +18,4 @@ class BufferEditor:
         )
 
         logger.info(f"Formatted string buffer of length {len(buffer)} into chunks of {chunk_size}")
-        
         return formatted_buffer

@@ -7,7 +7,7 @@ class I2CScanner:
     @staticmethod
     def scan(bus_number: int = 1) -> list[int]:
         active_addresses = []
-        logging.info(f"Scanning I2C bus /dev/i2c-{bus_number}...")
+        logger.info(f"Scanning I2C bus /dev/i2c-{bus_number}...")
 
         try:
             with SMBus(bus_number) as bus:
@@ -18,19 +18,18 @@ class I2CScanner:
                     except OSError:
                         # Expected when no device; ignore and continue scanning
                         pass
-
-            logging.info(f"Scan complete on bus {bus_number}. Found {len(active_addresses)} device(s).")
-            return active_addresses
-
         except FileNotFoundError:
-            logging.exception(f"I2C bus /dev/i2c-{bus_number} not found.")
+            logger.exception(f"I2C bus /dev/i2c-{bus_number} not found.")
             raise
         except PermissionError:
-            logging.exception(f"Permission denied accessing /dev/i2c-{bus_number}.")
+            logger.exception(f"Permission denied accessing /dev/i2c-{bus_number}.")
             raise
         except Exception:
-            logging.exception(f"Error scanning I2C bus {bus_number}")
+            logger.exception(f"Error scanning I2C bus {bus_number}")
             raise
+
+        logger.info(f"Scan complete on bus {bus_number}. Found {len(active_addresses)} device(s).")
+        return active_addresses
 
     @staticmethod
     def scan_to_str(bus_number: int = 1) -> str:
@@ -52,6 +51,6 @@ class I2CScanner:
             lines.append(line)
 
         lines = "\n".join(lines)
-        
-        print(f"Scanned I2C, Result: \n{lines}")
+
+        logger.info(f"Scanned I2C, Result: \n{lines}")
         return lines
