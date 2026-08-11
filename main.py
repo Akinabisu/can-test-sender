@@ -27,6 +27,7 @@ SENDER_RX_I2C = 0x702
 SENDER_TX_I2C = 0x703
 
 SCAN_PERIOD = 60.0
+FAST_PERIOD = 1.0
 LED_GPIO = 17
 
 INPUT_PATH = Path(__file__).resolve().parent / "input.txt"
@@ -36,7 +37,7 @@ async def periodic_i2c_scan_send_led(controller: CANController, led_controller: 
 
     try:
         while True:
-            await led_controller.set_mode_for_period(LEDMode.FAST, period=1.0)
+            await led_controller.set_mode_for_period(LEDMode.FAST, period=FAST_PERIOD)
             table_output = await asyncio.to_thread(I2CScanner.scan_to_str)
             await controller.send(SENDER_RX_I2C, SENDER_TX_I2C, table_output.encode("ascii", errors="replace"))
             await asyncio.sleep(period)
@@ -52,7 +53,6 @@ async def main():
     edited_buffer = BufferEditor.edit_buffer(content)
 
     led_controller = LEDController(LED_GPIO)
-
 
     async with CANController() as controller:
         task_led = asyncio.create_task(led_controller.blink())

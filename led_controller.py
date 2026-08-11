@@ -18,9 +18,10 @@ class LEDController:
         try:
             while True:
                 half_period = 1 / self.led_mode.frequency / 2
-                
                 self.led.on()
                 await asyncio.sleep(half_period)
+                
+                half_period = 1 / self.led_mode.frequency / 2
                 self.led.off()
                 await asyncio.sleep(half_period)
 
@@ -38,7 +39,7 @@ class LEDController:
             logger.info(f"Changed LED mode from {self.led_mode.name} to {new_mode.name}")
             self.led_mode = new_mode
 
-    async def set_mode_for_period(self, new_mode: LEDMode, period: float = 1.0, end_mode: LEDMode = LEDMode.NORMAL
+    async def set_mode_for_period(self, new_mode: LEDMode, period: float, end_mode: LEDMode = LEDMode.NORMAL
     ):
         self.set_mode(new_mode)
         await asyncio.sleep(period)
